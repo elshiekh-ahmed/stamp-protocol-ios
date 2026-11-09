@@ -142,9 +142,17 @@ final class BusinessFlowTests: XCTestCase {
             app.buttons[mode].tap()
             for tab in ["Overview", "Card", "Business", "You"] {
                 app.tabBars.buttons[tab].tap()
+                settle()
                 capture("Business \(tab) - \(mode)", app: app)
                 try audit(app)
             }
         }
+    }
+
+    /// Lets appearance cross-fades and tab transitions finish so the audit measures final colors.
+    private func settle() {
+        let idle = expectation(description: "Transitions finish")
+        idle.isInverted = true
+        wait(for: [idle], timeout: 1)
     }
 }

@@ -333,6 +333,8 @@ final class CustomerFlowTests: XCTestCase {
             capture("Role landing - \(mode)", app: app)
             app.buttons["setup.business"].tap()
             XCTAssertTrue(app.staticTexts["heading.businessWelcome"].waitForExistence(timeout: 3))
+            // Business dismisses the setup cover; audit once it has finished sliding away.
+            XCTAssertTrue(app.buttons["setup.customer"].waitForNonExistence(timeout: 3))
             try audit(app)
             capture("Business welcome - \(mode)", app: app)
             app.buttons["business.switch"].tap()
