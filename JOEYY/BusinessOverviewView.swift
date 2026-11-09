@@ -60,7 +60,7 @@ struct OverviewView: View {
                             .accessibilityIdentifier("overview.design")
                     }
 
-                    VStack(alignment: .leading, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 18) {
                         SectionHeading(title: "Activity", detail: period.title)
                         Picker("Period", selection: $period) {
                             ForEach(ReportPeriod.allCases) { option in
@@ -87,11 +87,13 @@ struct OverviewView: View {
                                 caption: period.title, identifier: "redeemed"
                             )
                         }
+                        Text("Stamps and rewards are recorded when customers collect at checkout. These figures come from sample data stored on this device.")
+                            .font(.footnote)
+                            .foregroundStyle(Color.muted)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-
-                    Text("Stamps and rewards are recorded when customers collect at checkout. These figures come from sample data stored on this device.")
-                        .font(.footnote)
-                        .fixedSize(horizontal: false, vertical: true)
+                    .padding(20)
+                    .background(Color.surface, in: RoundedRectangle(cornerRadius: 8))
                 }
                 .padding(24)
                 .frame(maxWidth: 720)
@@ -123,7 +125,7 @@ private struct MetricTile: View {
         .fixedSize(horizontal: false, vertical: true)
         .padding(18)
         .frame(maxWidth: .infinity, minHeight: 120, alignment: .topLeading)
-        .background(Color.surface, in: RoundedRectangle(cornerRadius: 8))
+        .background(Color.paper, in: RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.rule))
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("overview.metric.\(identifier)")

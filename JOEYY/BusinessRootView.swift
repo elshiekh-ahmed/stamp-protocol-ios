@@ -54,12 +54,8 @@ struct BusinessWelcomeView: View {
                             .accessibilityIdentifier("business.switch")
                         BugReportButton()
                     }
-                    VStack(alignment: .leading, spacing: 12) {
-                        PageTitle(text: "Business")
-                            .accessibilityIdentifier("heading.businessWelcome")
-                        Text("Set the stamps a reward takes, design the card customers collect, and see how often they come back.")
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                    PageTitle(text: "Business")
+                        .accessibilityIdentifier("heading.businessWelcome")
                     BusinessCardTile(
                         name: "Your business", location: "Seattle", reward: "Your reward",
                         requiredPunches: 10, design: .starter, detail: "4 of 10 punches"
@@ -79,9 +75,11 @@ struct BusinessWelcomeView: View {
                             store.loadNoremaSample()
                         }
                     }
-                    Text("Business data stays on this device. Sign-in and live customer activity aren't connected yet.")
-                        .font(.footnote)
-                        .fixedSize(horizontal: false, vertical: true)
+                    Notice(
+                        symbol: "iphone",
+                        title: "Stays on this device",
+                        message: "Set the stamps a reward takes, design the card customers collect, and see how often they come back. Sign-in and live customer activity aren't connected yet."
+                    )
                 }
                 .padding(24)
                 .frame(maxWidth: 820)
