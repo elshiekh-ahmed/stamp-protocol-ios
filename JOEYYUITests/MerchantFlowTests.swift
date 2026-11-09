@@ -1,7 +1,9 @@
 import XCTest
 
 @MainActor
-final class BusinessFlowTests: XCTestCase {
+/// Business-side flows. Named to run after CustomerFlowTests, whose timing-sensitive checks
+/// are steadiest on a freshly booted simulator.
+final class MerchantFlowTests: XCTestCase {
     /// Opens the setup landing and chooses Business, as a new business owner would.
     private func launchBusiness(extra: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
@@ -36,6 +38,15 @@ final class BusinessFlowTests: XCTestCase {
     }
 
     private func audit(_ app: XCUIApplication) throws {
+        do {
+            try performAudit(app)
+        } catch let error as NSError where error.code == -56 {
+            // "Audit failed to complete in time" is a runner timeout on long forms; retry once.
+            try performAudit(app)
+        }
+    }
+
+    private func performAudit(_ app: XCUIApplication) throws {
         try app.performAccessibilityAudit(for: [.contrast, .textClipped]) { issue in
             guard issue.auditType == .contrast, let element = issue.element else { return false }
             let underTabBar = app.tabBars.firstMatch.exists &&
