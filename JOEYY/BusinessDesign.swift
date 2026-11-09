@@ -108,7 +108,7 @@ struct BusinessCardTile: View {
                 Text(name)
                     .font(.system(.title2, design: theme.fontDesign).weight(.medium))
                 if !location.isEmpty {
-                    Text(location).font(.caption).lineLimit(2)
+                    Text(location).font(.caption).fixedSize(horizontal: false, vertical: true)
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text(reward.isEmpty ? "Describe the reward" : reward).font(.subheadline)

@@ -99,6 +99,7 @@ struct CardDesignerView: View {
                     Text("How customers see it").foregroundStyle(.tint)
                 } footer: {
                     Text("Home collection tile and punch card, as rendered in the customer app. Preview stamps aren't saved.")
+                        .foregroundStyle(Color.muted)
                 }
 
                 Section {
@@ -114,6 +115,7 @@ struct CardDesignerView: View {
                     Text("Rules").foregroundStyle(.tint)
                 } footer: {
                     Text("Choose \(ProgramDraft.punchRange.lowerBound)–\(ProgramDraft.punchRange.upperBound) stamps. Customers collect one per visit and claim this reward when the card is full.")
+                        .foregroundStyle(Color.muted)
                 }
 
                 Section {
@@ -135,6 +137,7 @@ struct CardDesignerView: View {
                     Text("Design").foregroundStyle(.tint)
                 } footer: {
                     Text("Colors are paired for light and dark mode with readable contrast. Reduce Motion on a customer's device always turns motion off.")
+                        .foregroundStyle(Color.muted)
                 }
 
                 Section {
@@ -146,12 +149,13 @@ struct CardDesignerView: View {
                     .accessibilityIdentifier("card.cover")
                     if loadingCover { ProgressView("Preparing image...") }
                     if draft.design.coverJPEG != nil {
-                        Button("Use original artwork", role: .destructive) { draft.design.coverJPEG = nil }
+                        Button("Use original artwork") { draft.design.coverJPEG = nil }
                     }
                 } header: {
                     Text("Cover").foregroundStyle(.tint)
                 } footer: {
                     Text("Without a photo, customers see artwork generated from your colors and card stock. Photos stay on this device.")
+                        .foregroundStyle(Color.muted)
                 }
 
                 Section {
@@ -167,14 +171,21 @@ struct CardDesignerView: View {
                             .font(.subheadline)
                             .foregroundStyle(Color.muted)
                     }
-                    Button(current == nil ? "Publish card" : "Publish version \(store.nextVersionNumber)") {
-                        if current == nil { publish() } else { confirmingPublish = true }
+                    if hasChanges {
+                        Button(current == nil ? "Publish card" : "Publish version \(store.nextVersionNumber)") {
+                            if current == nil { publish() } else { confirmingPublish = true }
+                        }
+                        .buttonStyle(PrimaryButton())
+                        .disabled(!canPublish)
+                        .accessibilityIdentifier("card.publish")
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                    } else if feedback == nil {
+                        Text("No changes to publish.")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.muted)
+                            .accessibilityIdentifier("card.upToDate")
                     }
-                    .buttonStyle(PrimaryButton())
-                    .disabled(!canPublish)
-                    .accessibilityIdentifier("card.publish")
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
                     if current != nil && hasChanges {
                         Button("Discard changes") { loadDraft() }
                             .buttonStyle(TextButton())
@@ -183,6 +194,7 @@ struct CardDesignerView: View {
                     }
                 } footer: {
                     Text(publishImpact).accessibilityIdentifier("card.impact")
+                        .foregroundStyle(Color.muted)
                 }
 
                 Section {
@@ -198,6 +210,7 @@ struct CardDesignerView: View {
                     Text("Apple Wallet").foregroundStyle(.tint)
                 } footer: {
                     Text("Not available yet. Wallet passes must be signed with an Apple Developer certificate before iPhone accepts them.")
+                        .foregroundStyle(Color.muted)
                 }
 
                 if !store.versionsNewestFirst.isEmpty {
@@ -353,6 +366,7 @@ struct VersionHistoryView: View {
                     }
                 } footer: {
                     Text(statusDetail(usage))
+                        .foregroundStyle(Color.muted)
                 }
             }
         }

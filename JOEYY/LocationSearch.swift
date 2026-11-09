@@ -134,7 +134,7 @@ struct LocationField: View {
                 .buttonStyle(.borderless)
                 .accessibilityIdentifier("business.location.change")
             }
-            Button("Remove location", role: .destructive) { location = "" }
+            Button("Remove location") { location = "" }
                 .buttonStyle(.borderless)
         }
     }

@@ -23,7 +23,7 @@ struct OverviewView: View {
                                         Text(business.location)
                                             .font(.caption)
                                             .foregroundStyle(Color.muted)
-                                            .lineLimit(2)
+                                            .fixedSize(horizontal: false, vertical: true)
                                     }
                                 }
                             }
@@ -91,7 +91,6 @@ struct OverviewView: View {
 
                     Text("Stamps and rewards are recorded when customers collect at checkout. These figures come from sample data stored on this device.")
                         .font(.footnote)
-                        .foregroundStyle(Color.muted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(24)

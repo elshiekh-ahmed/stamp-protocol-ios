@@ -72,7 +72,7 @@ struct BusinessEditor: View {
                         }
                         .accessibilityIdentifier("business.logo")
                         if logoPNG != nil {
-                            Button("Remove logo", role: .destructive) { logoPNG = nil }
+                            Button("Remove logo") { logoPNG = nil }
                                 .buttonStyle(.borderless)
                         }
                     }
@@ -82,6 +82,7 @@ struct BusinessEditor: View {
                 Text("Logo").foregroundStyle(.tint)
             } footer: {
                 Text("Square images work best. Logos are resized and stored on this device.")
+                    .foregroundStyle(Color.muted)
             }
 
             Section {
@@ -98,15 +99,18 @@ struct BusinessEditor: View {
                 Text("Location").foregroundStyle(.tint)
             } footer: {
                 Text("Choose your street address or your listing from Apple Maps so customers can find you. Typing a few letters, such as \u{201C}Sea\u{201D}, suggests matching places.")
+                    .foregroundStyle(Color.muted)
             }
 
-            Section {
-                Button(mode == .setup ? "Continue" : "Save changes") { save() }
-                    .buttonStyle(PrimaryButton())
-                    .disabled(!canSave)
-                    .accessibilityIdentifier("business.save")
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+            if mode == .setup || hasChanges {
+                Section {
+                    Button(mode == .setup ? "Continue" : "Save changes") { save() }
+                        .buttonStyle(PrimaryButton())
+                        .disabled(!canSave)
+                        .accessibilityIdentifier("business.save")
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                }
             }
 
             if mode == .edit, let business = store.business {
@@ -124,6 +128,7 @@ struct BusinessEditor: View {
                     Text("Client ID").foregroundStyle(.tint)
                 } footer: {
                     Text("Customers search for a business by name or this ID. Your business isn't listed in customer search yet.")
+                        .foregroundStyle(Color.muted)
                 }
             }
         }

@@ -58,7 +58,6 @@ struct BusinessWelcomeView: View {
                         PageTitle(text: "Business")
                             .accessibilityIdentifier("heading.businessWelcome")
                         Text("Set the stamps a reward takes, design the card customers collect, and see how often they come back.")
-                            .foregroundStyle(Color.muted)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     BusinessCardTile(
@@ -82,7 +81,6 @@ struct BusinessWelcomeView: View {
                     }
                     Text("Business data stays on this device. Sign-in and live customer activity aren't connected yet.")
                         .font(.footnote)
-                        .foregroundStyle(Color.muted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(24)
