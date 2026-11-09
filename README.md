@@ -2,6 +2,23 @@
 
 A native SwiftUI customer-loyalty prototype for iOS 18 and later.
 
+## JOEYY Version 3 Iteration Planning
+Planned potential v3: 
+
+1. Actual hole punch that comes in and makes the punch?
+2. Apple wallet wire impl
+3. Gallery view for discoverable places or gallery views in general as opposed to scroll
+4. Stackable redeemed tickets? Or have to use before rotating back to 0 stamps?
+5. Queued updating for stamp card update in customer of customer facing app
+6. Wallet stack for home page as well as group break down to expand group, individual location views
+7. Customer dependent reward stacking (we lean towards stacking though)
+8. Archive / graveyard for punch cards to see how much youve earned (memories)
+9. Default / fall back preset images for customers who haven't set a custom picture yet
+10. Redeemed / archive graveyard customized views as well
+
+Shareables:
+1. Shared design .md file to describe theming/common colors, common components and how they are rendered/look, and other standardized UI flow
+
 ## Run
 
 Open `JOEYY.xcodeproj`, select **JOEYY** and an iPhone simulator, then Run.
