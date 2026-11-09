@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RedeemedView: View {
     @Environment(LoyaltyStore.self) private var store
+    @Environment(MerchantBrandingStore.self) private var branding
 
     private var available: [Redemption] { store.redemptions.filter(\.isAvailable) }
     private var used: [Redemption] { store.redemptions.filter { $0.coupon?.usedAt != nil } }
@@ -14,8 +15,7 @@ struct RedeemedView: View {
                     PageTitle(text: "Redeemed")
                     if store.redemptions.isEmpty {
                         ContentUnavailableView(
-                            "No coupons", systemImage: "ticket",
-                            description: Text("Redeem stamps from a business card.")
+                            "No coupons", systemImage: "ticket"
                         )
                     } else {
                         if !available.isEmpty {
@@ -59,27 +59,28 @@ struct RedeemedView: View {
                 NavigationLink(value: entry) {
                     HStack(spacing: 16) {
                         PlaceMark(place: entry.place, size: 30)
-                            .foregroundStyle(.tint).frame(width: 44)
+                            .frame(width: 44)
                         VStack(alignment: .leading, spacing: 7) {
                             Text(entry.event.rewardTitle ?? "Reward")
-                                .font(.headline.weight(.medium)).foregroundStyle(.tint)
+                                .font(.headline.weight(.medium))
                             Text(entry.place.name)
-                                .font(.subheadline).foregroundStyle(Color.muted)
+                                .font(.subheadline)
                             Text(entry.event.date, format: .dateTime.month(.abbreviated).day().year())
-                                .font(.caption).foregroundStyle(Color.muted)
+                                .font(.caption)
                         }
                         .fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right")
-                            .font(.caption2).foregroundStyle(Color.muted)
+                            .font(.caption2)
                     }
                     .padding(20)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.surface, in: RoundedRectangle(cornerRadius: 8))
-                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.rule))
+                    .foregroundStyle(branding.theme(for: entry.place).ink)
+                    .background(branding.theme(for: entry.place).paper, in: TicketShape())
+                    .overlay(TicketShape().stroke(branding.theme(for: entry.place).ink.opacity(0.2)))
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(CardPressStyle(allowsMotion: branding.theme(for: entry.place).allowsMotion))
                 .accessibilityIdentifier("coupon.\(entry.place.id).\(entry.id.uuidString)")
             }
         }
@@ -89,6 +90,7 @@ struct RedeemedView: View {
 struct CouponDetailView: View {
     let couponID: UUID
     @Environment(LoyaltyStore.self) private var store
+    @Environment(MerchantBrandingStore.self) private var branding
     @State private var confirmingUse = false
     @State private var showingWallet = false
     @State private var failure: String?
@@ -102,14 +104,17 @@ struct CouponDetailView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         HStack {
                             Eyebrow(text: coupon.usedAt == nil ? "Available" : "Used")
-                                .foregroundStyle(.tint)
                                 .accessibilityIdentifier("coupon.status")
                             Spacer()
-                            PlaceMark(place: entry.place, size: 34).foregroundStyle(.tint)
+                            PlaceMark(place: entry.place, size: 34)
                         }
-                        PageTitle(text: entry.event.rewardTitle ?? "Reward", size: 32)
+                        Text(entry.event.rewardTitle ?? "Reward")
+                            .font(.largeTitle.weight(.medium))
+                            .fixedSize(horizontal: false, vertical: true)
                             .accessibilityIdentifier("coupon.title")
-                        Divider()
+                        Rectangle()
+                            .fill(branding.theme(for: entry.place).ink.opacity(0.4))
+                            .frame(height: 1)
                         VStack(spacing: 16) {
                             fact("Redeemed", value: Text(
                                 entry.event.date, format: .dateTime.month(.abbreviated).day().year()
@@ -124,15 +129,15 @@ struct CouponDetailView: View {
                             }
                         }
                         .font(.subheadline)
-                        .foregroundStyle(Color.muted)
-                        Text("Demo coupon. NFC and counter verification aren't implemented yet.")
-                            .font(.footnote).foregroundStyle(Color.muted)
+                        Text("Demo coupon. Not valid in store.")
+                            .font(.footnote)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(24)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.surface, in: RoundedRectangle(cornerRadius: 8))
-                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.rule))
+                    .foregroundStyle(branding.theme(for: entry.place).ink)
+                    .background(branding.theme(for: entry.place).paper, in: TicketShape())
+                    .overlay(TicketShape().stroke(branding.theme(for: entry.place).ink.opacity(0.2)))
 
                     if coupon.usedAt == nil {
                         Button("Mark as used") { confirmingUse = true }

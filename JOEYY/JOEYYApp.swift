@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct JOEYYApp: App {
     @State private var store: LoyaltyStore
+    @State private var branding: MerchantBrandingStore
     private let defaults: UserDefaults
     @AppStorage("appearance") private var appearance = "System"
     @AppStorage("accent") private var accent = AppAccent.orange.rawValue
@@ -25,17 +26,31 @@ struct JOEYYApp: App {
         _store = State(initialValue: LoyaltyStore(
             defaults: defaults, reset: arguments.contains("-reset-demo")
         ))
+        let directory = URL.applicationSupportDirectory.appendingPathComponent(
+            arguments.contains("-ui-testing") ? "TestBrandingPreviews" : "BrandingPreviews"
+        )
+        let branding = MerchantBrandingStore(defaults: defaults, directory: directory)
+        if arguments.contains("-ui-testing") && arguments.contains("-reset-demo") {
+            do { try branding.clear() }
+            catch { assertionFailure("Could not reset test artwork: \(error.localizedDescription)") }
+        }
+        _branding = State(initialValue: branding)
     }
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(store)
+                .environment(branding)
                 .defaultAppStorage(defaults)
                 .environment(\.appAccent, AppAccent(rawValue: accent) ?? .orange)
                 .tint((AppAccent(rawValue: accent) ?? .orange).color)
                 .accentColor((AppAccent(rawValue: accent) ?? .orange).color)
-                .fontDesign(.default)
+                .environment(
+                    \.simulatingReducedMotion,
+                    ProcessInfo.processInfo.arguments.contains("-ui-testing") &&
+                    ProcessInfo.processInfo.arguments.contains("-reduce-motion")
+                )
                 .preferredColorScheme(appearance == "System" ? nil : appearance == "Dark" ? .dark : .light)
         }
     }
@@ -47,14 +62,17 @@ enum AppTab: Hashable {
 
 struct RootView: View {
     @Environment(LoyaltyStore.self) private var store
-    @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
+    @Environment(MerchantBrandingStore.self) private var branding
+    @AppStorage("hasSeenWelcome") private var hasCompletedSetup = false
     @State private var tab = AppTab.home
-    @State private var showingWelcome = false
+    @State private var setupEntry: SetupEntry?
+    @State private var homeEntry = UUID()
 
     var body: some View {
         TabView(selection: $tab) {
             Tab("Home", systemImage: "house", value: .home) {
                 HomeView(tab: $tab)
+                    .id(homeEntry)
             }
             Tab("Search", systemImage: "magnifyingglass", value: .search) {
                 SearchView()
@@ -64,20 +82,27 @@ struct RootView: View {
             }
             .badge(store.redemptions.filter(\.isAvailable).count)
             Tab("You", systemImage: "person.crop.circle", value: .you) {
-                ProfileView()
+                ProfileView(onSetup: { setupEntry = .replay })
             }
         }
         .onAppear {
-            showingWelcome = !hasSeenWelcome && !ProcessInfo.processInfo.arguments.contains("-skip-welcome")
-        }
-        .fullScreenCover(isPresented: $showingWelcome) {
-            WelcomeView {
-                hasSeenWelcome = true
-                showingWelcome = false
+            if !hasCompletedSetup && !ProcessInfo.processInfo.arguments.contains("-skip-welcome") {
+                setupEntry = .install
             }
         }
+        .fullScreenCover(item: $setupEntry) { entry in
+            SetupView(
+                onCustomer: {
+                    hasCompletedSetup = true
+                    homeEntry = UUID()
+                    tab = .home
+                    setupEntry = nil
+                },
+                onClose: entry == .replay ? { setupEntry = nil } : nil
+            )
+        }
         .safeAreaInset(edge: .top, spacing: 0) {
-            if let error = store.storageError {
+            if let error = store.storageError ?? branding.storageError {
                 Text(error)
                     .font(.footnote)
                     .padding()
@@ -86,41 +111,12 @@ struct RootView: View {
                     .accessibilityAddTraits(.isStaticText)
             }
         }
+
     }
-}
 
-struct WelcomeView: View {
-    let continueAction: () -> Void
+    private enum SetupEntry: String, Identifiable {
+        case install, replay
 
-    var body: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    BrandMark()
-                    Spacer(minLength: 12)
-                    PageTitle(text: "Stamp cards", size: 40)
-                    Text("Find a business, collect stamps, and choose a reward.")
-                        .font(.body)
-                        .foregroundStyle(Color.muted)
-                        .lineSpacing(4)
-                    ClientRow(place: Place.samples[0], stamps: 5)
-                        .background(Color.surface, in: RoundedRectangle(cornerRadius: 8))
-                    Spacer(minLength: 0)
-                    Button("Continue", action: continueAction)
-                        .buttonStyle(PrimaryButton())
-                        .accessibilityIdentifier("welcome.continue")
-                    Text("Seattle prototype / Fictional offers")
-                        .font(.caption)
-                        .foregroundStyle(Color.muted)
-                        .frame(maxWidth: .infinity)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(28)
-                .frame(minHeight: geometry.size.height, alignment: .topLeading)
-                .frame(maxWidth: 560)
-                .frame(maxWidth: .infinity)
-            }
-            .background { AppBackground() }
-        }
+        var id: String { rawValue }
     }
 }

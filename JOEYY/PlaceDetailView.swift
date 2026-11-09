@@ -5,10 +5,12 @@ struct PlaceDetailView: View {
     let place: Place
     @Environment(LoyaltyStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reduceCardMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(MerchantBrandingStore.self) private var branding
     @State private var sheet: DetailSheet?
-    @State private var selectedReward: RewardOption?
     @State private var confirmingRedemption = false
+    @State private var stampFeedback = false
     @State private var confirmingArchive = false
     @State private var feedback: String?
     @State private var failure: String?
@@ -16,37 +18,22 @@ struct PlaceDetailView: View {
     private var membership: Membership? { store.membership(for: place) }
     private var stamps: Int { membership?.stamps ?? 0 }
     private var active: Bool { membership?.archived == false }
+    private var complete: Bool { stamps == place.requiredPunches }
+    private var theme: MerchantTheme { branding.theme(for: place) }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 26) {
-                Text(place.neighborhood).font(.caption).foregroundStyle(Color.muted)
-
-                if membership != nil {
-                    StampBalance(place: place, stamps: stamps)
-                }
-
-                if active {
-                    HStack(spacing: 16) {
-                        Button("Show card") {
-                            sheet = .showCard
+                ViewThatFits(in: .horizontal) {
+                    if !typeSize.isAccessibilitySize {
+                        HStack(alignment: .top, spacing: 32) {
+                            establishmentHeader.frame(minWidth: 340)
+                            loyaltySection.frame(minWidth: 320)
                         }
-                        .accessibilityIdentifier("detail.showCard")
-                        Button("Apple Wallet") {
-                            sheet = .wallet
-                        }
-                        .accessibilityIdentifier("detail.wallet")
                     }
-                    .buttonStyle(SecondaryButton())
-                } else {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text(membership == nil ? place.story : "Restore this card to collect or use stamps.")
-                            .font(.subheadline).foregroundStyle(Color.muted)
-                        Button(membership == nil ? "Add card" : "Restore card") {
-                            store.join(place)
-                        }
-                        .buttonStyle(PrimaryButton())
-                        .accessibilityIdentifier("detail.join")
+                    VStack(alignment: .leading, spacing: 24) {
+                        establishmentHeader
+                        loyaltySection
                     }
                 }
 
@@ -56,47 +43,14 @@ struct PlaceDetailView: View {
                         .accessibilityIdentifier("detail.feedback")
                 }
 
-                VStack(alignment: .leading, spacing: 16) {
-                    SectionHeading(title: "Rewards")
-                    VStack(spacing: 0) {
-                        ForEach(place.rewards) { reward in
-                            Button {
-                                selectedReward = reward
-                                confirmingRedemption = true
-                            } label: {
-                                ViewThatFits(in: .horizontal) {
-                                    HStack(spacing: 16) {
-                                        Text(reward.title).fixedSize()
-                                        Spacer(minLength: 0)
-                                        rewardCost(reward)
-                                    }
-                                    VStack(alignment: .leading, spacing: 10) {
-                                        Text(reward.title).fixedSize(horizontal: false, vertical: true)
-                                        rewardCost(reward)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-                                .font(.subheadline)
-                                .padding(18)
-                                .frame(maxWidth: .infinity, minHeight: 64)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(TextButton())
-                            .disabled(!active || stamps < reward.cost)
-                            .accessibilityIdentifier("reward.\(reward.id)")
-                            if reward.id != place.rewards.last?.id {
-                                Divider().padding(.horizontal, 18)
-                            }
-                        }
-                    }
-                    .background(Color.surface, in: RoundedRectangle(cornerRadius: 8))
-                }
-
                 DisclosureGroup {
                     VStack(alignment: .leading, spacing: 18) {
                         Text(place.address)
-                        Text(place.rule)
-                        Text("Stamps stay with this business. Redeeming subtracts the reward's cost; the rest stays on your card. No expiry in this demo.")
+                        if let url = URL(string: place.website) {
+                            Link("Business website", destination: url)
+                        }
+                        Text("One stamp per visit. Claiming saves a coupon in Redeemed and starts a new card. No expiry.")
+                        Text("Demo offers, artwork, and client IDs. Not affiliated with these businesses.")
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Client ID").font(.caption).foregroundStyle(.tint)
                             Text(place.clientID)
@@ -129,37 +83,28 @@ struct PlaceDetailView: View {
                                 .font(.subheadline).frame(minHeight: 44)
                         }
                     }
-                    if active {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Button("Add demo stamp", systemImage: "plus.circle") {
-                                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
-                                    do {
-                                        try store.addStamp(to: place)
-                                        feedback = "Stamp added."
-                                    } catch {
-                                        failure = error.localizedDescription
-                                    }
-                                }
-                            }
-                            .font(.subheadline).frame(minHeight: 44)
-                            .accessibilityIdentifier("detail.simulateVisit")
-                            Text("Saved locally. No purchase is verified.")
-                                .font(.caption).foregroundStyle(Color.muted)
-                        }
-                    }
+                    .padding(20)
+                    .background(Color.surface, in: RoundedRectangle(cornerRadius: 8))
                 }
             }
             .padding(24)
-            .frame(maxWidth: 620)
+            .frame(maxWidth: 1_100)
             .frame(maxWidth: .infinity)
         }
         .background { AppBackground() }
-        .appNavigationTitle(place.name)
+        .appNavigationTitle("Card")
+        .sensoryFeedback(.impact(weight: .medium), trigger: stampFeedback)
         .toolbar(.visible, for: .navigationBar)
         .toolbar {
             if active {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
+                        Button(membership?.isFavorite == true ? "Remove favorite" : "Favorite", systemImage: "star") {
+                            do { try store.setFavorite(membership?.isFavorite != true, for: place) }
+                            catch { failure = error.localizedDescription }
+                        }
+                        Button("Groups", systemImage: "folder") { sheet = .groups }
+                        Button("Preview branding", systemImage: "photo") { sheet = .branding }
                         Button("Archive card", systemImage: "archivebox") { confirmingArchive = true }
                     } label: {
                         Image(systemName: "ellipsis").frame(width: 44, height: 44)
@@ -170,6 +115,10 @@ struct PlaceDetailView: View {
         }
         .sheet(item: $sheet) { item in
             switch item {
+            case .branding:
+                BrandingPreviewView(place: place)
+            case .groups:
+                GroupMembershipView(place: place)
             case .wallet:
                 WalletStatusView()
             case .showCard:
@@ -187,6 +136,7 @@ struct PlaceDetailView: View {
                             Button("Done") { sheet = nil }
                         }
                     }
+
                 }
             case .coupon(let id):
                 NavigationStack {
@@ -199,23 +149,18 @@ struct PlaceDetailView: View {
                 }
             }
         }
-        .alert(
-            "Redeem \(selectedReward?.title ?? "reward")?",
-            isPresented: $confirmingRedemption,
-            presenting: selectedReward
-        ) { reward in
-            Button("Use \(reward.cost) stamps") {
+        .alert("Claim \(place.rewardDescription)?", isPresented: $confirmingRedemption) {
+            Button("Claim reward") {
                 do {
-                    let coupon = try store.redeem(reward, at: place)
-                    feedback = "Saved in Redeemed."
+                    let coupon = try store.claimReward(at: place)
                     sheet = .coupon(coupon.id)
                 } catch {
                     failure = error.localizedDescription
                 }
             }
             Button("Cancel", role: .cancel) {}
-        } message: { reward in
-            Text("\(stamps - reward.cost) stamps will remain. A demo coupon will be saved in Redeemed.")
+        } message: {
+            Text("Save a demo coupon in Redeemed and start a fresh card.")
         }
         .confirmationDialog("Archive this card?", isPresented: $confirmingArchive, titleVisibility: .visible) {
             Button("Archive card") {
@@ -235,21 +180,73 @@ struct PlaceDetailView: View {
         }
     }
 
-    private func rewardCost(_ reward: RewardOption) -> some View {
-        HStack(spacing: 8) {
-            Text("\(reward.cost) stamps").monospacedDigit().fixedSize()
-            Image(systemName: active && stamps >= reward.cost ? "arrow.up.right" : "lock")
-                .font(.caption)
+    private var establishmentHeader: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            MerchantCover(place: place)
+                .frame(height: 200)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .accessibilityIdentifier("detail.cover")
+            Text(place.name)
+                .font(.system(.title, design: theme.fontDesign).weight(.semibold))
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+            Text(place.neighborhood).font(.subheadline).foregroundStyle(Color.muted)
         }
+    }
+
+    private var loyaltySection: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            PunchCard(place: place, stamps: stamps)
+            if active {
+                if complete {
+                    Button("Claim reward") { confirmingRedemption = true }
+                        .buttonStyle(PrimaryButton())
+                        .accessibilityIdentifier("detail.claim")
+                } else {
+                    Button("Add demo stamp") {
+                        do {
+                            try withAnimation(reduceMotion || !theme.allowsMotion ? nil : .spring(response: 0.25, dampingFraction: 0.8)) {
+                                try store.addStamp(to: place)
+                            }
+                            stampFeedback.toggle()
+                        } catch { failure = error.localizedDescription }
+                    }
+                    .buttonStyle(PrimaryButton())
+                    .accessibilityIdentifier("detail.simulateVisit")
+                }
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 12) { customerCodeButton; walletButton }
+                    VStack(spacing: 12) { customerCodeButton; walletButton }
+                }
+                .buttonStyle(SecondaryButton())
+            } else {
+                Button(membership == nil ? "Add card" : "Restore card") { store.join(place) }
+                    .buttonStyle(PrimaryButton())
+                    .accessibilityIdentifier("detail.join")
+            }
+            Text("Demo program. Not a real offer.")
+                .font(.footnote.weight(.medium)).foregroundStyle(Color.primary)
+        }
+    }
+
+    private var customerCodeButton: some View {
+        Button("Show card") { sheet = .showCard }.accessibilityIdentifier("detail.showCard")
+    }
+
+    private var walletButton: some View {
+        Button("Apple Wallet") { sheet = .wallet }.accessibilityIdentifier("detail.wallet")
     }
 }
 
 private enum DetailSheet: Identifiable {
-    case wallet, showCard, history
+    case wallet, showCard, history, branding, groups
     case coupon(UUID)
 
     var id: String {
         switch self {
+        case .branding: "branding"
+        case .groups: "groups"
         case .wallet: "wallet"
         case .showCard: "showCard"
         case .history: "history"
@@ -282,16 +279,18 @@ struct HistoryRow: View {
         HStack(spacing: 14) {
             Image(systemName: event.kind == .reward ? "gift" : event.kind == .joined ? "plus.circle" : "checkmark.seal")
                 .foregroundStyle(.tint).frame(width: 25)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.subheadline)
                 Text(event.date, format: .dateTime.month(.abbreviated).day().year())
-                    .font(.caption).foregroundStyle(Color.muted)
+                    .font(.footnote.weight(.medium)).foregroundStyle(Color.primary)
             }
             Spacer()
-            Text(change).font(.subheadline.weight(.medium).monospacedDigit())
+            Text(change).font(.subheadline.weight(.bold).monospacedDigit())
                 .foregroundStyle(accent.color)
         }
         .padding(.vertical, 3)
+        .accessibilityElement(children: .combine)
     }
 }
 

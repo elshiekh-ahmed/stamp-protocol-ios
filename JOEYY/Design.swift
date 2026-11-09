@@ -37,6 +37,10 @@ private struct AppAccentKey: EnvironmentKey {
 }
 
 extension EnvironmentValues {
+    @Entry var simulatingReducedMotion = false
+
+    var reduceCardMotion: Bool { accessibilityReduceMotion || simulatingReducedMotion }
+
     var appAccent: AppAccent {
         get { self[AppAccentKey.self] }
         set { self[AppAccentKey.self] = newValue }
@@ -200,15 +204,13 @@ struct AppBackground: View {
 
 struct ClientRow: View {
     let place: Place
-    var stamps: Int? = nil
     @Environment(\.appAccent) private var accent
 
     var body: some View {
         HStack(spacing: 16) {
-            PlaceMark(place: place, size: 28)
-                .foregroundStyle(accent.color)
-                .frame(width: 44, height: 44)
-                .background(accent.surfaceColor, in: RoundedRectangle(cornerRadius: 6))
+            MerchantCover(place: place, canRetry: false)
+                .frame(width: 64, height: 64)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
             VStack(alignment: .leading, spacing: 6) {
                 Text(place.name)
                     .font(.headline.weight(.medium))
@@ -217,14 +219,6 @@ struct ClientRow: View {
                 Text(place.neighborhood).font(.caption).foregroundStyle(Color.muted)
             }
             Spacer(minLength: 8)
-            if let stamps {
-                VStack(alignment: .trailing, spacing: 3) {
-                    Text("\(stamps)").font(.title3.weight(.medium).monospacedDigit())
-                        .foregroundStyle(accent.color)
-                    Text(stamps == 1 ? "stamp" : "stamps")
-                        .font(.caption).foregroundStyle(Color.muted)
-                }
-            }
             Image(systemName: "chevron.right").font(.caption2).foregroundStyle(Color.muted)
         }
         .padding(18)
@@ -233,32 +227,236 @@ struct ClientRow: View {
     }
 }
 
-struct StampBalance: View {
+extension CardStyle {
+    var paper: Color { MerchantTheme.sample(for: self).paper }
+    var ink: Color { MerchantTheme.sample(for: self).ink }
+}
+
+struct PunchCard: View {
     let place: Place
     let stamps: Int
-    @Environment(\.appAccent) private var accent
+    var compact = false
+    var title: String? = nil
+    var reward: String? = nil
+    @Environment(\.reduceCardMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(MerchantBrandingStore.self) private var branding
+    @ScaledMetric(relativeTo: .body) private var diameter: CGFloat = 44
+
+    private var theme: MerchantTheme { branding.theme(for: place) }
+    private var allowsMotion: Bool { !reduceMotion && theme.allowsMotion }
+    private var stock: PunchCardStock { PunchCardStock(artwork: theme.artwork) }
 
     var body: some View {
-        HStack(alignment: .center) {
-            Text("\(stamps) \(stamps == 1 ? "stamp" : "stamps")")
-                .font(.largeTitle.weight(.medium).monospacedDigit())
-                .foregroundStyle(accent.color)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier("detail.balance")
-            Spacer()
-            PlaceMark(place: place, size: 38)
-                .foregroundStyle(accent.color)
+        VStack(alignment: .leading, spacing: compact ? 16 : 24) {
+            if compact {
+                Text(title ?? place.name).font(.system(.headline, design: theme.fontDesign))
+            }
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    rewardTitle
+                    Spacer(minLength: 0)
+                    rewardTarget
+                }
+                VStack(alignment: .leading, spacing: 8) { rewardTitle; rewardTarget }
+            }
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: columns),
+                spacing: compact ? 12 : 22
+            ) {
+                ForEach(0..<place.requiredPunches, id: \.self) { index in
+                    ZStack {
+                        if index < stamps {
+                            PunchHole(seed: index)
+                                .stroke(.white.opacity(0.7), lineWidth: 3)
+                                .offset(y: 0.8)
+                            PunchHole(seed: index)
+                                .stroke(theme.ink.opacity(0.55), lineWidth: 1.5)
+                            PunchHole(seed: index)
+                                .fill(.black)
+                                .blendMode(.destinationOut)
+                                .transition(
+                                    allowsMotion
+                                        ? .scale(scale: 0.02).combined(with: .opacity) : .opacity
+                                )
+                        } else {
+                            Circle()
+                                .strokeBorder(theme.ink, lineWidth: 1)
+                            if index == place.requiredPunches - 1 {
+                                Circle().strokeBorder(theme.ink, lineWidth: 1)
+                                    .padding(compact ? 3 : 4)
+                            }
+                            Text("\(index + 1)")
+                                .font(.system(size: compact ? 10 : 16, weight: .semibold, design: .monospaced))
+                                .foregroundStyle(theme.ink)
+                                .background(theme.paper)
+                        }
+                    }
+                    .frame(width: compact ? 24 : min(diameter, 54), height: compact ? 24 : min(diameter, 54))
+                    .rotationEffect(.degrees(index < stamps ? Double((index * 7) % 5) - 2 : 0))
+                    .offset(y: index < stamps ? CGFloat(index % 3 - 1) * 1.5 : 0)
+                    .accessibilityHidden(true)
+                }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(stamps) of \(place.requiredPunches) stamps")
+            .accessibilityValue(stamps == place.requiredPunches ? "Complete" : "Collecting")
+            .accessibilityIdentifier("card.progress")
         }
-        .padding(24)
+        .foregroundStyle(theme.ink)
+        .padding(compact ? 16 : 24)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(LinearGradient(
-                    colors: [accent.surfaceColor, Color.surface],
-                    startPoint: .topLeading, endPoint: .bottomTrailing
-                ))
+            stock
+                .fill(theme.paper)
+                .overlay {
+                    CardStockTexture()
+                        .clipShape(stock)
+                }
+                .overlay {
+                    stock.stroke(.white.opacity(0.35), lineWidth: 0.5).padding(2)
+                }
+        }
+        .compositingGroup()
+        .shadow(color: .black.opacity(0.24), radius: 1, x: 0, y: 2)
+        .shadow(color: .black.opacity(0.14), radius: 12, x: 0, y: 8)
+        .overlay {
+            stock.stroke(theme.ink.opacity(0.22), lineWidth: 0.75)
+        }
+        .phaseAnimator([0, 1, 2], trigger: stamps) { card, phase in
+            card
+                .scaleEffect(allowsMotion && phase == 1 ? 0.985 : 1)
+                .rotation3DEffect(
+                    .degrees(allowsMotion && phase == 1 ? -3 : 0),
+                    axis: (x: 1, y: 0.2, z: 0), perspective: 0.35
+                )
+        } animation: { phase in
+            allowsMotion
+                ? (phase == 1 ? .easeIn(duration: 0.08) : .spring(response: 0.32, dampingFraction: 0.65))
+                : nil
+        }
+    }
+
+    private var rewardTitle: some View {
+        Text(reward ?? place.rewardDescription)
+            .font(.system(compact ? .subheadline : .title2, design: theme.fontDesign).weight(.semibold))
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var rewardTarget: some View {
+        Text("\(place.requiredPunches) stamps").font(.caption.monospacedDigit()).fixedSize()
+    }
+
+    private var columns: Int {
+        if compact && !typeSize.isAccessibilitySize { return place.requiredPunches }
+        return typeSize.isAccessibilitySize ? 3 : (place.requiredPunches + 1) / 2
+    }
+}
+
+private struct PunchCardStock: Shape {
+    let artwork: MerchantTheme.Artwork
+
+    func path(in rect: CGRect) -> Path {
+        switch artwork {
+        case .cloud:
+            Path(roundedRect: rect, cornerRadius: 24)
+        case .stone:
+            Path(roundedRect: rect, cornerRadius: 3)
+        case .rail:
+            Path { path in
+                let cut: CGFloat = min(16, rect.width / 8, rect.height / 8)
+                path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+                path.addLine(to: CGPoint(x: rect.maxX - cut, y: rect.minY))
+                path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + cut))
+                path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+                path.addLine(to: CGPoint(x: rect.minX + cut, y: rect.maxY))
+                path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY - cut))
+                path.closeSubpath()
             }
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(accent.color.opacity(0.15)))
+        }
+    }
+}
+
+private struct CardStockTexture: View {
+    var body: some View {
+        Canvas { context, size in
+            for index in 0..<180 {
+                let x = CGFloat((index * 73 + 19) % 997) / 997 * size.width
+                let y = CGFloat((index * 137 + 41) % 991) / 991 * size.height
+                var fiber = Path()
+                fiber.move(to: CGPoint(x: x, y: y))
+                fiber.addLine(to: CGPoint(x: x + CGFloat(index % 3 + 1), y: y + 0.5))
+                context.stroke(fiber, with: .color(.white.opacity(0.14)), lineWidth: 0.5)
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
+private struct PunchHole: Shape {
+    let seed: Int
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        for point in 0..<96 {
+            let angle = Double(point) / 96 * .pi * 2
+            let variation = 1 - Double((point * 13 + seed * 17) % 11) * 0.0025
+            let position = CGPoint(
+                x: rect.midX + cos(angle) * rect.width * 0.46 * variation,
+                y: rect.midY + sin(angle) * rect.height * 0.46 * variation
+            )
+            if point == 0 { path.move(to: position) } else { path.addLine(to: position) }
+        }
+        path.closeSubpath()
+        return path
+    }
+}
+
+struct CardPressStyle: ButtonStyle {
+    var allowsMotion = true
+    @Environment(\.reduceCardMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(reduceMotion || !allowsMotion || !configuration.isPressed ? 1 : 0.98)
+            .rotation3DEffect(
+                .degrees(reduceMotion || !allowsMotion || !configuration.isPressed ? 0 : 3),
+                axis: (x: 1, y: -0.3, z: 0), perspective: 0.4
+            )
+            .opacity(configuration.isPressed ? 0.88 : 1)
+            .animation(reduceMotion || !allowsMotion ? nil : .spring(response: 0.28, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
+struct TicketShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let r: CGFloat = 14
+        let notch = min(rect.height / 5, 12)
+        var path = Path()
+        path.move(to: CGPoint(x: r, y: 0))
+        path.addLine(to: CGPoint(x: rect.maxX - r, y: 0))
+        path.addQuadCurve(to: CGPoint(x: rect.maxX, y: r), control: CGPoint(x: rect.maxX, y: 0))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY - notch))
+        path.addCurve(
+            to: CGPoint(x: rect.maxX, y: rect.midY + notch),
+            control1: CGPoint(x: rect.maxX - notch * 1.4, y: rect.midY - notch),
+            control2: CGPoint(x: rect.maxX - notch * 1.4, y: rect.midY + notch)
+        )
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - r))
+        path.addQuadCurve(to: CGPoint(x: rect.maxX - r, y: rect.maxY), control: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: r, y: rect.maxY))
+        path.addQuadCurve(to: CGPoint(x: 0, y: rect.maxY - r), control: CGPoint(x: 0, y: rect.maxY))
+        path.addLine(to: CGPoint(x: 0, y: rect.midY + notch))
+        path.addCurve(
+            to: CGPoint(x: 0, y: rect.midY - notch),
+            control1: CGPoint(x: notch * 1.4, y: rect.midY + notch),
+            control2: CGPoint(x: notch * 1.4, y: rect.midY - notch)
+        )
+        path.addLine(to: CGPoint(x: 0, y: r))
+        path.addQuadCurve(to: CGPoint(x: r, y: 0), control: .zero)
+        path.closeSubpath()
+        return path
     }
 }
 
@@ -286,45 +484,9 @@ struct PlaceMark: View {
     var size: CGFloat = 24
 
     var body: some View {
-        Group {
-            switch place.icon {
-            case .burger:
-                BurgerShape().fill()
-            case .system(let name):
-                Image(systemName: name).resizable().scaledToFit()
-            }
-        }
+        Text(place.initials)
+        .font(.system(size: size * 0.55, weight: .semibold, design: .serif))
         .frame(width: size, height: size)
         .accessibilityHidden(true)
-    }
-}
-
-private struct BurgerShape: Shape {
-    func path(in rect: CGRect) -> Path {
-        let w = rect.width
-        let h = rect.height
-        var path = Path()
-        path.move(to: CGPoint(x: w * 0.1, y: h * 0.38))
-        path.addCurve(
-            to: CGPoint(x: w * 0.9, y: h * 0.38),
-            control1: CGPoint(x: w * 0.1, y: -h * 0.04),
-            control2: CGPoint(x: w * 0.9, y: -h * 0.04)
-        )
-        path.addLine(to: CGPoint(x: w * 0.9, y: h * 0.42))
-        path.addLine(to: CGPoint(x: w * 0.1, y: h * 0.42))
-        path.closeSubpath()
-        path.addRoundedRect(
-            in: CGRect(x: w * 0.04, y: h * 0.48, width: w * 0.92, height: h * 0.1),
-            cornerSize: CGSize(width: w * 0.05, height: h * 0.05)
-        )
-        path.addRoundedRect(
-            in: CGRect(x: w * 0.07, y: h * 0.63, width: w * 0.86, height: h * 0.12),
-            cornerSize: CGSize(width: w * 0.06, height: h * 0.06)
-        )
-        path.addRoundedRect(
-            in: CGRect(x: w * 0.1, y: h * 0.8, width: w * 0.8, height: h * 0.14),
-            cornerSize: CGSize(width: w * 0.08, height: h * 0.08)
-        )
-        return path
     }
 }

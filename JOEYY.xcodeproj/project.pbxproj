@@ -8,11 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		0AE40CE81EB3D058744663BE /* JOEYYApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15A8122B47320AC805049C54 /* JOEYYApp.swift */; };
+		239978A3D55B55C375EBB190 /* MerchantBranding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D9D524BE89B2F8F012933B /* MerchantBranding.swift */; };
 		6C16A57EC183B1BD2EC905D9 /* CardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80D9BCABE63DCED664EEC11C /* CardsView.swift */; };
 		6E1812456CEA0A3F746F5D50 /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC52EFBA230B52325227C9D /* Design.swift */; };
+		7D96FCF58A37DD2D22338C7D /* MerchantViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2982890AB8C5EC2AA8FBAD30 /* MerchantViews.swift */; };
 		8AF9B82D553BD351DA6982F2 /* PlaceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B96C2DB9236447E63FC45ED7 /* PlaceDetailView.swift */; };
+		A83B728DE20838DD7940A18D /* MerchantImageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD5BD3BDD970491A6AD189E4 /* MerchantImageTests.swift */; };
 		E668508D76237D04711F6D97 /* RedeemedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817F18B0E7D7309548BD39A4 /* RedeemedView.swift */; };
 		E7C8BB6CA0A2FE3E90B199EF /* CustomerFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12C787F2F77F633051D97E8E /* CustomerFlowTests.swift */; };
+		EA06B4A94A3B432FE80624DA /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B718F5D703F1A770FE5A0681 /* SetupView.swift */; };
 		EB078FDA7D8BF4295EF9C3E6 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F3F4D363E0DBCF5E83D8A2D /* ProfileView.swift */; };
 		F4B3E721804645C1B2918F35 /* LoyaltyStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA38619749D36CC949E79A1D /* LoyaltyStoreTests.swift */; };
 		F84AA413204EB9FADEA32AF0 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE72D5F2CE3CBA00AA892630 /* Models.swift */; };
@@ -36,16 +40,20 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		08D9D524BE89B2F8F012933B /* MerchantBranding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MerchantBranding.swift; sourceTree = "<group>"; };
 		12C787F2F77F633051D97E8E /* CustomerFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerFlowTests.swift; sourceTree = "<group>"; };
 		1523FF0DC91EDFC744C47B16 /* JOEYYTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = JOEYYTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		15A8122B47320AC805049C54 /* JOEYYApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JOEYYApp.swift; sourceTree = "<group>"; };
 		15C985A4505B0427E1090BEE /* JOEYYUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = JOEYYUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		23D3EF8BD1328AD3353C93C8 /* JOEYY.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = JOEYY.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2982890AB8C5EC2AA8FBAD30 /* MerchantViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MerchantViews.swift; sourceTree = "<group>"; };
 		4F3F4D363E0DBCF5E83D8A2D /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		80D9BCABE63DCED664EEC11C /* CardsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardsView.swift; sourceTree = "<group>"; };
 		817F18B0E7D7309548BD39A4 /* RedeemedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedeemedView.swift; sourceTree = "<group>"; };
 		9FC52EFBA230B52325227C9D /* Design.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Design.swift; sourceTree = "<group>"; };
+		B718F5D703F1A770FE5A0681 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
 		B96C2DB9236447E63FC45ED7 /* PlaceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceDetailView.swift; sourceTree = "<group>"; };
+		DD5BD3BDD970491A6AD189E4 /* MerchantImageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MerchantImageTests.swift; sourceTree = "<group>"; };
 		DE72D5F2CE3CBA00AA892630 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		EA38619749D36CC949E79A1D /* LoyaltyStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoyaltyStoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -65,10 +73,13 @@
 				80D9BCABE63DCED664EEC11C /* CardsView.swift */,
 				9FC52EFBA230B52325227C9D /* Design.swift */,
 				15A8122B47320AC805049C54 /* JOEYYApp.swift */,
+				08D9D524BE89B2F8F012933B /* MerchantBranding.swift */,
+				2982890AB8C5EC2AA8FBAD30 /* MerchantViews.swift */,
 				DE72D5F2CE3CBA00AA892630 /* Models.swift */,
 				B96C2DB9236447E63FC45ED7 /* PlaceDetailView.swift */,
 				4F3F4D363E0DBCF5E83D8A2D /* ProfileView.swift */,
 				817F18B0E7D7309548BD39A4 /* RedeemedView.swift */,
+				B718F5D703F1A770FE5A0681 /* SetupView.swift */,
 			);
 			path = JOEYY;
 			sourceTree = "<group>";
@@ -87,6 +98,7 @@
 			isa = PBXGroup;
 			children = (
 				EA38619749D36CC949E79A1D /* LoyaltyStoreTests.swift */,
+				DD5BD3BDD970491A6AD189E4 /* MerchantImageTests.swift */,
 			);
 			path = JOEYYTests;
 			sourceTree = "<group>";
@@ -215,10 +227,13 @@
 				6C16A57EC183B1BD2EC905D9 /* CardsView.swift in Sources */,
 				6E1812456CEA0A3F746F5D50 /* Design.swift in Sources */,
 				0AE40CE81EB3D058744663BE /* JOEYYApp.swift in Sources */,
+				239978A3D55B55C375EBB190 /* MerchantBranding.swift in Sources */,
+				7D96FCF58A37DD2D22338C7D /* MerchantViews.swift in Sources */,
 				F84AA413204EB9FADEA32AF0 /* Models.swift in Sources */,
 				8AF9B82D553BD351DA6982F2 /* PlaceDetailView.swift in Sources */,
 				EB078FDA7D8BF4295EF9C3E6 /* ProfileView.swift in Sources */,
 				E668508D76237D04711F6D97 /* RedeemedView.swift in Sources */,
+				EA06B4A94A3B432FE80624DA /* SetupView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -227,6 +242,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F4B3E721804645C1B2918F35 /* LoyaltyStoreTests.swift in Sources */,
+				A83B728DE20838DD7940A18D /* MerchantImageTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

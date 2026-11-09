@@ -4,86 +4,171 @@ A native SwiftUI customer-loyalty prototype for iOS 18 and later.
 
 ## Run
 
-Open `JOEYY.xcodeproj`, select the **JOEYY** scheme and an iPhone simulator,
-then Run. No packages, credentials, signing team, or backend are needed for
-the simulator. For a physical device, select your own signing team in Xcode.
+Open `JOEYY.xcodeproj`, select **JOEYY** and an iPhone simulator, then Run.
+No packages, credentials, signing team, or backend are needed for the simulator.
+For a physical device, select your signing team in Xcode.
 
-The project is generated from `project.yml` using XcodeGen. The generated
-project is included; XcodeGen is only needed if you change the target setup.
+The included project is generated from `project.yml` using XcodeGen.
 
-## Walkthrough
+## Sample businesses
 
-- **Home** shows three compact rows: Dick's Drive-In has 5 stamps, Cozy Cafe
-  has 6, and Jango Smoothies has 2. There is no fixed card target.
-- Open a card and scroll to **Add demo stamp**.
-- At Cozy Cafe, use 5 stamps for a regular coffee or keep collecting for a
-  10-stamp sandwich. Confirmation deducts only the chosen cost; unused stamps
-  remain. Redemption opens a coupon and saves it in **Redeemed**.
-- **Redeemed** groups available and used coupons across businesses. Its tab badge
-  counts available coupons. Three examples come from Dick's Drive-In, Cozy Cafe,
-  and Jango Smoothies. Open a coupon to view it, open the Wallet placeholder,
-  or mark it used locally. Using it does not deduct more stamps.
-- **Apple Wallet** and **Show card** directly state that Wallet and customer
-  codes are not implemented. Neither presents a fake pass or scannable code.
-- **Search** accepts a business name or exact assigned client GUID. It starts
-  empty, without categories, neighborhood search, or an unverified directory.
-  Common Ground and The Neat are additional sample programs that can be joined.
-- **Program details** on each card contains its client ID and a copy action.
-  Try Cozy Cafe's fictional ID: `29BFF0A1-7EB3-4E8A-A02D-8FA39CC00102`.
-  Archived cards can be restored using the archive button on Home.
-- **You** starts with light/dark/system appearance and eight accents, including
-  orange, yellow, purple, and green. It also has preview communication
-  preferences, data controls, and a demo reset. There is no profile or display-name form.
+Names and locations come from the businesses' official websites. Offers,
+client IDs, artwork, coupons, and transactions are fictional. Nothing here
+represents an actual loyalty program or affiliation.
 
-## Visual system
+| Business | Location | Demo card |
+|---|---|---|
+| [Monorail Espresso](https://monorailespresso.com/pages/pike-st) | 510 Pike St, Seattle | 8 stamps for an espresso; starts at 5 |
+| [Cloud City Coffee](https://www.cloudcitycoffee.com/pages/where-to-find-cloud-city) | 8801 Roosevelt Way NE, Seattle | 6 stamps for a brewed coffee; starts full |
+| [5 Stones Coffee Co](https://5stonescoffeeco.com/pages/kirkland) | 312 Central Way, Kirkland | 10 stamps for a latte; starts at 2 |
+| [Saint Bread](https://www.saintbread.com) | 1421 NE Boat St, Seattle | 8 stamps for a pastry; add from Search |
+| [Book Larder](https://booklarder.com) | 4252 Fremont Ave N, Seattle | 6 stamps for 10% off one book; add from Search |
+| [Gloom Coffee](https://gloom.coffee) | 240 2nd Ave S, Seattle | 8 stamps for an espresso; add from Search |
 
-The interface uses the system sans-serif family throughout, with consistent
-weights and tabular balances. The selected accent applies to page and
-navigation titles, section labels, merchant names, stamps, card surfaces,
-controls, and a radial background fade. Text and filled controls use separate contrast-safe
-color tokens; yellow and orange controls use dark lettering.
+These are original prototype card treatments, not the businesses' branding.
+No merchant logos or photographs are bundled.
 
-Cards retain their identity through names, locations, and icons rather than
-unrelated color palettes. Dick's Drive-In uses a custom vector burger icon in
-Home, balances, and search results. Copy describes actions,
-rewards, and state without promotional taglines.
+## Flow
 
-All establishments use sample Seattle locations. All loyalty programs, offers,
-and transactions are fictional and are not affiliated with named businesses.
-There is no authentication, NFC integration, purchase verification, actual
-redemption, live Wallet integration, location access, analytics, or networking.
-Showing the placeholder customer code does not collect a stamp.
+Fresh installs open a card-led landing with **Customer** and **Business** destinations.
+Customer opens the loyalty app. Business opens an unavailable-state screen with
+back navigation; business management and account authentication are not implemented.
+Only entering Customer completes initial setup. Existing welcome completion is
+preserved. **You > Customer or business** replays setup without changing saved data.
+Choosing Customer opens Home and clears its previous navigation and collection
+filter. Closing replay returns to You without changing navigation.
 
-Cards, coupons, activity, and preferences persist locally using UserDefaults. Existing
-balances and legacy activity are retained; old redemption events do not
-invent reward details that were never recorded. Those records appear under
-**Earlier redemptions**, not as newly usable coupons.
-The first launch after this update adds three historical demo coupons to existing
-sample memberships once, without changing balances or archive state. Deletion
-does not recreate them on relaunch; resetting the demo restores the examples.
-The demo
-export writes a JSON file in the app's temporary directory and only shares it
-when the user chooses the system share action. Deleting cards also removes that
-temporary export; preferences remain. No server account exists.
+**Home** shows a single-column collection with a full-width card for each place.
+Each business has one reward and a fixed
+target between 3 and 12 stamps, matching the merchant model's `requiredPunches`
+and `rewardDescription`.
+
+Open Monorail and tap **Add demo stamp** three times. A full card stays full
+until **Claim reward** is confirmed. Claiming saves a coupon in **Redeemed**
+and starts the next card at zero. Cancel leaves the full card untouched.
+The prototype blocks additional stamps while full; it does not discard stamps,
+bank overflow, or automatically reset a completed card.
+
+This claim-triggered reset is a customer-flow decision, not an implemented
+shared backend contract. The merchant app's automatic reward/reset behavior
+still needs to be reconciled before integration.
+
+**Redeemed** separates available and used coupons. Three historical sample
+coupons are included. Marking a coupon used is a local demo action, happens
+once, and does not change stamps. Archived cards retain their stamps, history,
+and usable coupons; restore them through the archive button on Home.
+
+**Search** opens with **Discoverable**, a horizontally snapping gallery of
+Saint Bread, Book Larder, and Gloom Coffee. These are fixed pilot selections,
+not personalized recommendations. Full-bleed posters use original bakery,
+bookshop, and coffee artwork unless a merchant supplies a cover photo.
+Shared typography and compact captions keep the gallery consistent. Swiping
+adds depth and artwork parallax, with a light haptic on each snap. Reduce Motion
+or a merchant's motion preference disables parallax, tilt, and scaling.
+Opening a place does not join it; **Add card** adds a zero-stamp card to Home.
+The three existing cards, balances, and coupons are unchanged.
+Typing switches to business-name or exact assigned client GUID matches across
+all six places, not neighborhoods or categories. Clearing restores the gallery.
+Try Monorail's demo ID:
+`6A2E3D81-7B49-4F12-A0C3-819D62E00101`.
+**Program details** contains the address, official website, demo rules, and ID.
+
+Save any card with its star, including unfinished cards. Home's collection menu
+switches between **All places**, **Favorites**, and named **Groups**. Groups can
+contain multiple places, and a place can belong to several groups. Edit names
+and membership in **Groups**, or assign a card through its detail options.
+Archiving hides a card without losing its favorites or group membership.
+Each group has an options menu with Rename and Delete group. Its editor also
+supports changing places and deleting the group, with confirmation.
+Deleting a group does not remove cards, punches, favorites, or coupons.
+
+**You** contains appearance, eight accents, local notification preferences, and
+setup replay. Notifications are not connected. Data/export/reset controls and
+prototype sections are no longer part of this screen. No profile form or sign-in
+is required.
+**Apple Wallet**, customer codes, NFC, authentication, and purchase verification
+are not implemented. There are no fake passes or scannable codes.
+
+## Appearance and storage
+
+Native Dynamic Type, light/dark palettes, and accent washes apply throughout.
+Merchant themes select contrast-safe paper/ink colors, system typeface families,
+original artwork, an optional image, and whether motion is enabled. Detail
+shows the cover and a separate punch card; wide layouts place them side by side.
+Earned slots cut through the paper instead of showing an emoji or a filled icon.
+Cards use fine paper fibers, a lit stock edge, printed numbered targets, and
+slightly irregular cut edges. A stamp briefly compresses and tips the card;
+Reduce Motion keeps it still. The final target has a double printed ring.
+Monorail uses clipped stock corners, Cloud City rounded stock, and 5 Stones
+square stock; these follow the existing merchant artwork styles.
+Presses have shallow perspective and spring compression; collecting a stamp
+punches its slot with a brief impact haptic. Reduce Motion and merchant motion
+opt-out remove perspective, spring scaling, and stamp zoom.
+Animation never controls loyalty state.
+
+Cards, coupons, events, favorites, groups, themes, and preferences stay in
+UserDefaults. Local photo previews are JPEG files in Application Support.
+This update preserves v2 punches and coupons; older v2 cards default to not
+favorited. The earlier v1 migration replaced the fictional starter set with
+fresh program IDs, without assigning old balances to real businesses.
+Invalid saved records produce an error rather than being overwritten.
+
+The model retains deletion/reset helpers for testing, but You does not expose
+them. Setup replay never calls them. Published image URLs contact their image
+host, but no loyalty history is uploaded.
+Opening a business website uses its external URL.
+
+## Merchant artwork integration
+
+The merchant app chooses a photo and uploads it directly to the merchant service.
+That service publishes an HTTPS cover URL and presentation tokens. Customers
+receive those published values, not upload credentials or private image bytes.
+
+`MerchantBrandingStore.applyPublishedBranding(_:)` accepts a JSON-encoded
+`PublishedMerchantBranding` containing `merchantID` and `theme`. The prototype
+uses `Place.id` as `merchantID`; the production mapping to assigned client GUIDs
+is not agreed. Theme fields:
+
+| Field | Value |
+|---|---|
+| `lightPaper`, `lightInk`, `darkPaper`, `darkInk` | RGB integers, 0 through 16777215; text contrast must be at least 4.5:1 |
+| `typeface` | `standard`, `rounded`, `serif`, or `monospaced` |
+| `artwork` | `rail`, `cloud`, or `stone`; used when a photo is absent |
+| `coverURL` | Optional HTTPS image URL without embedded credentials |
+| `allowsMotion` | Boolean; accessibility Reduce Motion always takes precedence |
+
+Use versioned image URLs when replacing artwork. Images load asynchronously,
+are limited to 20 MB, downsampled to 1600 pixels, and cached in bounded memory.
+Invalid images show an error and retry control on the establishment page.
+Theme changes do not change stamps, rewards, groups, or coupons.
+
+**Card options > Preview branding** opens a local photo picker and a published
+URL preview. A local photo overrides the published cover until removed. It is
+not uploaded. Original sample artwork is used without merchant-provided assets.
+
+There is no configured merchant API, authentication, upload endpoint, or live
+branding subscription. The receiving model and image renderer are implemented;
+wiring a server response to them requires the real service contract.
 
 ## Checks
 
-Run Product > Test in Xcode for model and UI walkthrough tests.
-Checks include persistence, partial redemption, saving for larger rewards,
-invalid redemption, balance overflow, legacy data, name/GUID search, joining, archiving, deletion,
-coupon issuance and one-time use, sample migration, appearance, the largest
-accessibility text size, and text contrast. Coupon use is a local demo action;
-NFC validation and Apple Wallet coupon passes are not implemented. The screen
-audit excludes contrast findings for text underneath the native translucent
-tab bar or its scroll-edge dimming overlay; app text palettes are also checked
-numerically at 4.5:1.
-These checks do not replace a full VoiceOver or device accessibility review.
+Apple Wallet remains blocked on signed passes. The simulator's public PassKit
+API reports that adding passes is supported, but rejects an unsigned demo
+package with "Signature is missing". A fictional reward still needs a signed
+`.pkpass`; no certificates or signing keys are bundled. Merchant artwork can be
+rendered into pass images later, within Apple's native pass layout.
+
+Product > Test runs model and simulator UI checks: full-card persistence,
+claim/cancel/reset, duplicate claim rejection, one-time coupon use, migration,
+search, archive/restore, model deletion, role setup/replay, settings, large text, Reduce Motion, and
+light/dark contrast, Favorites, Groups, branding validation, image loading,
+local photo persistence, and photo-picker cancellation. UI tests use isolated defaults.
 
 ```sh
 xcodebuild test -project JOEYY.xcodeproj -scheme JOEYY \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.2'
 ```
 
-Launch arguments `-skip-welcome -reset-demo` are available for repeatable
-walkthroughs. UI tests additionally use `-ui-testing` for isolated cards and
-preferences; with `-reset-demo`, only that test suite's local state is cleared.
+`-skip-welcome -reset-demo` supports repeatable walkthroughs.
+`-ui-testing` isolates defaults; `-reset-demo` then clears only test state.
+Automated checks do not replace a VoiceOver or physical-device review.
