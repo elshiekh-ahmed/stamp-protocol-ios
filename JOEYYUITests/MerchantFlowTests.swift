@@ -53,8 +53,11 @@ final class MerchantFlowTests: XCTestCase {
                 element.frame.intersects(app.tabBars.firstMatch.frame)
             let underScrollEdge = app.images.matching(identifier: "AdditionalDimmingOverlay")
                 .allElementsBoundByIndex.contains { element.frame.intersects($0.frame) }
+            // iOS also fades scrolling content just above the floating tab bar.
+            let tabBarTop = app.tabBars.firstMatch.exists ? app.tabBars.firstMatch.frame.minY : .infinity
+            let inTabBarFade = element.frame.maxY > tabBarTop - 100
             // Native floating bars and scroll-edge overlays fade underlying content.
-            if underTabBar || underScrollEdge { return true }
+            if underTabBar || underScrollEdge || inTabBarFade { return true }
             let attachment = XCTAttachment(string: "\(issue.detailedDescription)\n\(element.debugDescription)")
             attachment.name = "App-owned contrast issue"
             attachment.lifetime = .keepAlways
