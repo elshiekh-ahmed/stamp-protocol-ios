@@ -274,18 +274,22 @@ final class CustomerFlowTests: XCTestCase {
         XCTAssertFalse(app.buttons["setup.customer"].exists)
     }
 
-    func testBusinessChoiceDoesNotFinishSetupAndCanGoBack() {
+    func testBusinessChoiceOpensBusinessSideAndIsRemembered() {
         let app = launch(welcome: true)
         app.buttons["setup.business"].tap()
-        XCTAssertTrue(app.staticTexts["setup.businessUnavailable"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["heading.businessWelcome"].waitForExistence(timeout: 3))
         capture("Setup - Business destination", app: app)
-        app.navigationBars.buttons["Back"].tap()
-        XCTAssertTrue(app.buttons["setup.customer"].waitForExistence(timeout: 3))
         app.terminate()
         app.launchArguments = ["-ui-testing"]
         app.launch()
+        XCTAssertTrue(app.staticTexts["heading.businessWelcome"].waitForExistence(timeout: 3))
+        app.buttons["business.switch"].tap()
         XCTAssertTrue(app.buttons["setup.customer"].waitForExistence(timeout: 3))
         app.buttons["setup.customer"].tap()
+        XCTAssertTrue(app.staticTexts["heading.home"].waitForExistence(timeout: 3))
+        app.terminate()
+        app.launchArguments = ["-ui-testing"]
+        app.launch()
         XCTAssertTrue(app.staticTexts["heading.home"].waitForExistence(timeout: 3))
     }
 
@@ -299,9 +303,12 @@ final class CustomerFlowTests: XCTestCase {
         XCTAssertTrue(business.isHittable)
         capture("Setup - largest text and Reduce Motion", app: app)
         business.tap()
-        XCTAssertTrue(app.staticTexts["setup.businessUnavailable"].waitForExistence(timeout: 3))
-        app.navigationBars.buttons["Back"].tap()
+        XCTAssertTrue(app.staticTexts["heading.businessWelcome"].waitForExistence(timeout: 3))
+        let switchSide = app.buttons["business.switch"]
+        for _ in 0..<6 where !switchSide.isHittable { app.swipeDown() }
+        switchSide.tap()
         let customer = app.buttons["setup.customer"]
+        XCTAssertTrue(customer.waitForExistence(timeout: 3))
         for _ in 0..<6 where !customer.isHittable { app.swipeDown() }
         XCTAssertTrue(customer.isHittable)
         customer.tap()
@@ -325,10 +332,13 @@ final class CustomerFlowTests: XCTestCase {
             try audit(app)
             capture("Role landing - \(mode)", app: app)
             app.buttons["setup.business"].tap()
-            XCTAssertTrue(app.staticTexts["setup.businessUnavailable"].waitForExistence(timeout: 3))
+            XCTAssertTrue(app.staticTexts["heading.businessWelcome"].waitForExistence(timeout: 3))
             try audit(app)
-            app.buttons["setup.close"].tap()
-            XCTAssertTrue(app.buttons["settings.setup"].waitForExistence(timeout: 3))
+            capture("Business welcome - \(mode)", app: app)
+            app.buttons["business.switch"].tap()
+            XCTAssertTrue(app.buttons["setup.close"].waitForExistence(timeout: 3))
+            app.buttons["setup.customer"].tap()
+            XCTAssertTrue(app.staticTexts["heading.home"].waitForExistence(timeout: 3))
         }
     }
 
@@ -369,9 +379,11 @@ final class CustomerFlowTests: XCTestCase {
         setup.tap()
         XCTAssertTrue(app.buttons["setup.customer"].waitForExistence(timeout: 3))
         app.buttons["setup.business"].tap()
-        XCTAssertTrue(app.staticTexts["setup.businessUnavailable"].waitForExistence(timeout: 3))
-        app.buttons["setup.close"].tap()
-        XCTAssertTrue(app.buttons["settings.setup"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["heading.businessWelcome"].waitForExistence(timeout: 3))
+        app.buttons["business.switch"].tap()
+        XCTAssertTrue(app.buttons["setup.customer"].waitForExistence(timeout: 3))
+        app.buttons["setup.customer"].tap()
+        XCTAssertTrue(app.staticTexts["heading.home"].waitForExistence(timeout: 3))
     }
 
     func testArchiveCanBeRestored() {

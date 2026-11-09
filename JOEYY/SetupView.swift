@@ -2,8 +2,8 @@ import SwiftUI
 
 struct SetupView: View {
     let onCustomer: () -> Void
+    let onBusiness: () -> Void
     var onClose: (() -> Void)? = nil
-    @State private var showingBusiness = false
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -35,9 +35,6 @@ struct SetupView: View {
             }
             .background { AppBackground() }
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(isPresented: $showingBusiness) {
-                BusinessEntryView(onClose: onClose)
-            }
         }
         .interactiveDismissDisabled(onClose == nil)
     }
@@ -52,10 +49,8 @@ struct SetupView: View {
     private var businessDestination: some View {
         SetupDestination(
             title: "Business", subtitle: "Create a program", business: true,
-            identifier: "setup.business"
-        ) {
-            showingBusiness = true
-        }
+            identifier: "setup.business", action: onBusiness
+        )
     }
 }
 
@@ -165,42 +160,6 @@ private struct SetupCardStack: View {
         .onAppear {
             withAnimation(allowsMotion ? .spring(response: 0.5, dampingFraction: 0.8) : nil) {
                 appeared = true
-            }
-        }
-    }
-}
-
-private struct BusinessEntryView: View {
-    let onClose: (() -> Void)?
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 28) {
-                SetupArtwork(business: true)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 150)
-                    .scaleEffect(1.5)
-                    .accessibilityHidden(true)
-                PageTitle(text: "Business")
-                Text("Business setup isn't available yet.")
-                    .foregroundStyle(Color.muted)
-                    .accessibilityIdentifier("setup.businessUnavailable")
-            }
-            .padding(24)
-            .frame(maxWidth: 620)
-            .frame(maxWidth: .infinity)
-        }
-        .background { AppBackground() }
-        .appNavigationTitle("Business")
-        .toolbar(.visible, for: .navigationBar)
-        .toolbar {
-            if let onClose {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Close", action: onClose)
-                        .buttonStyle(.plain)
-                        .tint(Color.primary)
-                        .accessibilityIdentifier("setup.close")
-                }
             }
         }
     }

@@ -4,6 +4,8 @@ import SwiftUI
 struct JOEYYApp: App {
     @State private var store: LoyaltyStore
     @State private var branding: MerchantBrandingStore
+    @State private var business: PartnerStore
+    @State private var screens = ScreenTracker()
     private let defaults: UserDefaults
     @AppStorage("appearance") private var appearance = "System"
     @AppStorage("accent") private var accent = AppAccent.orange.rawValue
@@ -35,6 +37,14 @@ struct JOEYYApp: App {
             catch { assertionFailure("Could not reset test artwork: \(error.localizedDescription)") }
         }
         _branding = State(initialValue: branding)
+        let business = PartnerStore(
+            fileURL: PartnerStore.fileURL(testing: arguments.contains("-ui-testing")),
+            reset: arguments.contains("-ui-testing") && arguments.contains("-reset-demo")
+        )
+        if arguments.contains("-ui-testing") && arguments.contains("-business-sample") {
+            business.loadNoremaSample()
+        }
+        _business = State(initialValue: business)
     }
 
     var body: some Scene {
@@ -42,6 +52,8 @@ struct JOEYYApp: App {
             RootView()
                 .environment(store)
                 .environment(branding)
+                .environment(business)
+                .environment(screens)
                 .defaultAppStorage(defaults)
                 .environment(\.appAccent, AppAccent(rawValue: accent) ?? .orange)
                 .tint((AppAccent(rawValue: accent) ?? .orange).color)
@@ -63,30 +75,41 @@ enum AppTab: Hashable {
 struct RootView: View {
     @Environment(LoyaltyStore.self) private var store
     @Environment(MerchantBrandingStore.self) private var branding
+    @Environment(PartnerStore.self) private var business
     @AppStorage("hasSeenWelcome") private var hasCompletedSetup = false
     @State private var tab = AppTab.home
+    /// The side chosen on the setup landing; reopened on the next launch.
+    @AppStorage("experience") private var experience = Experience.customer
     @State private var setupEntry: SetupEntry?
     @State private var homeEntry = UUID()
 
     var body: some View {
-        TabView(selection: $tab) {
-            Tab("Home", systemImage: "house", value: .home) {
-                HomeView(tab: $tab)
-                    .id(homeEntry)
-            }
-            Tab("Search", systemImage: "magnifyingglass", value: .search) {
-                SearchView()
-            }
-            Tab("Redeemed", systemImage: "ticket", value: .redeemed) {
-                RedeemedView()
-            }
-            .badge(store.redemptions.filter(\.isAvailable).count)
-            Tab("You", systemImage: "person.crop.circle", value: .you) {
-                ProfileView(onSetup: { setupEntry = .replay })
+        Group {
+            switch experience {
+            case .customer:
+                TabView(selection: $tab) {
+                    Tab("Home", systemImage: "house", value: .home) {
+                        HomeView(tab: $tab)
+                            .id(homeEntry)
+                    }
+                    Tab("Search", systemImage: "magnifyingglass", value: .search) {
+                        SearchView()
+                    }
+                    Tab("Redeemed", systemImage: "ticket", value: .redeemed) {
+                        RedeemedView()
+                    }
+                    .badge(store.redemptions.filter(\.isAvailable).count)
+                    Tab("You", systemImage: "person.crop.circle", value: .you) {
+                        ProfileView(onSetup: { setupEntry = .replay })
+                    }
+                }
+            case .business:
+                BusinessRootView(onSetup: { setupEntry = .replay })
             }
         }
         .onAppear {
-            if !hasCompletedSetup && !ProcessInfo.processInfo.arguments.contains("-skip-welcome") {
+            if experience == .customer && !hasCompletedSetup
+                && !ProcessInfo.processInfo.arguments.contains("-skip-welcome") {
                 setupEntry = .install
             }
         }
@@ -94,15 +117,20 @@ struct RootView: View {
             SetupView(
                 onCustomer: {
                     hasCompletedSetup = true
+                    experience = .customer
                     homeEntry = UUID()
                     tab = .home
+                    setupEntry = nil
+                },
+                onBusiness: {
+                    experience = .business
                     setupEntry = nil
                 },
                 onClose: entry == .replay ? { setupEntry = nil } : nil
             )
         }
         .safeAreaInset(edge: .top, spacing: 0) {
-            if let error = store.storageError ?? branding.storageError {
+            if let error = store.storageError ?? branding.storageError ?? (experience == .business ? business.storageError : nil) {
                 Text(error)
                     .font(.footnote)
                     .padding()
@@ -112,6 +140,10 @@ struct RootView: View {
             }
         }
 
+    }
+
+    private enum Experience: String {
+        case customer, business
     }
 
     private enum SetupEntry: String, Identifiable {

@@ -238,12 +238,14 @@ struct PunchCard: View {
     var compact = false
     var title: String? = nil
     var reward: String? = nil
+    /// Renders an unpublished theme, such as the business side's card preview.
+    var themeOverride: MerchantTheme? = nil
     @Environment(\.reduceCardMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(MerchantBrandingStore.self) private var branding
     @ScaledMetric(relativeTo: .body) private var diameter: CGFloat = 44
 
-    private var theme: MerchantTheme { branding.theme(for: place) }
+    private var theme: MerchantTheme { themeOverride ?? branding.theme(for: place) }
     private var allowsMotion: Bool { !reduceMotion && theme.allowsMotion }
     private var stock: PunchCardStock { PunchCardStock(artwork: theme.artwork) }
 

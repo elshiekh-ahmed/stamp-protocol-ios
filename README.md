@@ -48,10 +48,10 @@ No merchant logos or photographs are bundled.
 ## Flow
 
 Fresh installs open a card-led landing with **Customer** and **Business** destinations.
-Customer opens the loyalty app. Business opens an unavailable-state screen with
-back navigation; business management and account authentication are not implemented.
-Only entering Customer completes initial setup. Existing welcome completion is
-preserved. **You > Customer or business** replays setup without changing saved data.
+Customer opens the loyalty app. Business opens the business side (below); the app
+reopens whichever side was chosen last. Only entering Customer completes customer setup.
+Existing welcome completion is preserved. **You > Customer or business** replays setup
+from either side without changing saved data.
 Choosing Customer opens Home and clears its previous navigation and collection
 filter. Closing replay returns to You without changing navigation.
 
@@ -105,6 +105,33 @@ prototype sections are no longer part of this screen. No profile form or sign-in
 is required.
 **Apple Wallet**, customer codes, NFC, authentication, and purchase verification
 are not implemented. There are no fake passes or scannable codes.
+
+## Business side
+
+Business owners set up their business, design the card customers collect, and see how often
+customers return. It uses the same design system, `MerchantTheme`, and card views as the
+customer app, so the card designer previews exactly what customers see.
+
+- **Welcome**: set up a business, or explore **Norema Cafe** sample data (fictional activity).
+- **Overview**: lifetime cardholders, plus stamps, rewards earned, and rewards redeemed for
+  Today / 7 / 30 / 90 days / All. Shows the live card as a Home collection tile.
+- **Card**: stamps for a reward (3–12, `Place.punchRange`), the reward, and the card's
+  `MerchantTheme`: contrast-checked light/dark color pairs, typeface, card stock
+  (Clipped `rail`, Rounded `cloud`, Square `stone`), cover photo, and motion. The preview uses
+  `PlaceGalleryTile`-style tiles and `PunchCard` with an unpublished theme.
+  Publishing creates an immutable **version**. Cards with stamps keep their version's rules and
+  look until complete; cards with no stamps, new customers, and next cards use the live version.
+  The publish confirmation shows how many cards keep their rules and how many switch.
+  **Version history** marks each version Live, Finishing, or Retired.
+- **Business**: name, logo, location from Apple Maps suggestions, and client ID.
+- **You**: shared appearance and accent, **Customer or business**, sample data controls, and
+  **Report a bug**. The ladybug on each page also opens a pre-filled GitHub issue in this
+  repository with the app version, device, iOS version, and current screen.
+
+Business data is JSON in Application Support, separate from customer data. There is no business
+sign-in, server, or link between published business cards and customer search yet; location
+search text is sent to Apple Maps. Apple Wallet is unavailable for the same signing reason above.
+`-ui-testing -reset-demo` also clears business test data; add `-business-sample` to load Norema.
 
 ## Appearance and storage
 

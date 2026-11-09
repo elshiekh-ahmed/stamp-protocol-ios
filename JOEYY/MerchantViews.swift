@@ -112,7 +112,7 @@ struct MerchantCover: View {
     }
 }
 
-private struct MerchantArtwork: View {
+struct MerchantArtwork: View {
     let theme: MerchantTheme
 
     var body: some View {
