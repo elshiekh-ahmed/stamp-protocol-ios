@@ -644,6 +644,7 @@ final class CustomerFlowTests: XCTestCase {
 
     private func audit(_ app: XCUIApplication) throws {
         try app.performAccessibilityAudit(for: [.contrast, .textClipped]) { issue in
+            print("AUDIT \(issue.auditType) :: \(issue.compactDescription) :: \(issue.element?.debugDescription.prefix(300) ?? "nil")")
             guard issue.auditType == .contrast, let element = issue.element else { return false }
             let underTabBar = app.tabBars.firstMatch.exists &&
                 element.frame.intersects(app.tabBars.firstMatch.frame)
